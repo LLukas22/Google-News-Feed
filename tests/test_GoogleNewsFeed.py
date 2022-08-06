@@ -1,5 +1,5 @@
 import src
-from src.GNR import GoogleNewsFeed,NewsItem
+from src.google_news_feed import GoogleNewsFeed,NewsItem
 from datetime import datetime,date
 from lxml import etree
 from lxml.etree import _Element

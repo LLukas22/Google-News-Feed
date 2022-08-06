@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "google_news_feed"
+version = "0.0.2"
+authors = [
+  { name="Lukas Kreussel", email="lukaskreussel@gmail.com" },
+]
+description = "A simple python library to consume the google news rss feed"
+readme = "README.md"
+license = { file="LICENSE" }
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies=["httpx>=0.23.0","dateparser>=1.1.1","lxml>=4.9.0"]
+
+[project.urls]
+"Homepage" = "https://github.com/LLukas22/Google-News-RSS"
+"Bug Tracker" = "https://github.com/LLukas22/Google-News-RSS/issues"

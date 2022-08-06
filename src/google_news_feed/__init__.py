@@ -182,7 +182,7 @@ class GoogleNewsFeed:
              
 if __name__ == "__main__":
     gnf = GoogleNewsFeed()
-    news = gnf.query_topic("BUSINESS")
+    news = gnf.query("apple")
     print(news)
         
         
