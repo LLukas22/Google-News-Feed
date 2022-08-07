@@ -4,9 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "google_news_feed"
-version = "0.0.4"
+version = "1.0.0"
 authors = [
-  { name="Lukas Kreussel", email="lukaskreussel@gmail.com" },
+  { name="Lukas Kreussel"},
 ]
 description = "A simple python library to consume the google news rss feed"
 readme = "README.md"
