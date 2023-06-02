@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "google_news_feed"
-version = "1.0.0"
+version = "1.1.0"
 authors = [
   { name="Lukas Kreussel"},
 ]
@@ -17,7 +17,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies=["httpx>=0.23.0","dateparser>=1.1.1","lxml>=4.9.0"]
+dependencies=["aiohttp>=3.8.4","dateparser>=1.1.1","lxml>=4.9.0","requests>=2.31.0","beautifulsoup4>=4.12.2"]
 
 [project.urls]
 "Homepage" = "https://github.com/LLukas22/Google-News-RSS"

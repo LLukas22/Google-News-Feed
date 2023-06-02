@@ -68,7 +68,13 @@ def test_top_headlines_should_return_news_items():
     assert isinstance(news_items[0], NewsItem)
     
 def test_internal_link_are_resolved():
+    news_items = GoogleNewsFeed(run_async=False).top_headlines()
+    assert len(news_items) > 0
+    for news_item in news_items:
+        assert not news_item.is_internal_google_link
+
+def test_internal_link_are_resolved_async():
     news_items = GoogleNewsFeed().top_headlines()
     assert len(news_items) > 0
     for news_item in news_items:
-        assert not news_item.is_google_internal_link
+        assert not news_item.is_internal_google_link
