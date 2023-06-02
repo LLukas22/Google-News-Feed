@@ -1,7 +1,7 @@
 # Google-News-Feed
 A simple python library to consume the google news rss feed.
 
-Inspired by [pygooglenews](https://github.com/kotartemiy/pygooglenews) and implemented using [httpx](https://pypi.org/project/httpx/) and [lxml](https://pypi.org/project/lxml/).
+Inspired by [pygooglenews](https://github.com/kotartemiy/pygooglenews) and implemented using [aiohttp](https://pypi.org/project/aiohttp/) and [lxml](https://pypi.org/project/lxml/).
 
 
 ## Installation

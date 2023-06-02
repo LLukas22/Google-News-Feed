@@ -1,17 +1,28 @@
 import urllib.parse
-import httpx
 from lxml import etree
 from lxml.etree import _Element
 from datetime import datetime,date
 from dateparser import parse
 import asyncio
 import logging
+from typing import Optional
+from dataclasses import dataclass
+import requests
+from bs4 import BeautifulSoup
+import aiohttp
 
 
-GOOGLE_INTERNAL_URL = "https://news.google.com/__i/rss"    
+GOOGLE_INTERNAL_URL = set(["https://news.google.com/__i/rss","https://news.google.com/rss"])   
 BASE_URL = 'https://news.google.com/rss'
 PARSER = etree.HTMLParser(recover=True)
-MOVED_STATUS_CODE = 301
+
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'
+}
+
+COOKIES = {
+    'CONSENT': 'YES+cb.20220419-08-p0.cs+FX+111'
+}
 
 KNOWN_TOPICS={
     "BUSINESS":"CAAqKggKIiRDQkFTRlFvSUwyMHZNRGx6TVdZU0JXVnVMVlZUR2dKVlV5Z0FQAQ",
@@ -24,31 +35,35 @@ KNOWN_TOPICS={
     "HEALTH":"CAAqJQgKIh9DQkFTRVFvSUwyMHZNR3QwTlRFU0JXVnVMVlZUS0FBUAE"
 }
     
+@dataclass
 class NewsItem(object):
-    title:str
-    link:str
-    pubDate:datetime
-    description:str
-    source:str
-    def __init__(self,title:str=None,link:str=None,pubDate:datetime=None,description:str=None,source:str=None) -> None:
-        self.title = title
-        self.link = link
-        self.pubDate = pubDate
-        self.description = description
-        self.source = source
-        
+    title:Optional[str]=None
+    link:Optional[str]=None
+    pubDate:Optional[datetime]=None
+    description:Optional[str]=None
+    source:Optional[str]=None
+
     def __repr__(self) -> str:
         return f'{self.title}'
     
     @property
-    def is_google_internal_link(self)->bool:
-        return self.link.startswith(GOOGLE_INTERNAL_URL)
+    def is_internal_google_link(self)->bool:
+        for internal_link in GOOGLE_INTERNAL_URL:
+            if self.link.startswith(internal_link):
+                return True
+        return False
     
 class GoogleNewsFeed:
-    def __init__(self,language:str='en',country:str='US',client:httpx.Client=None,resolve_internal_links:bool=True,run_async:bool=True)->None:
+    def __init__(self,language:str='en',country:str='US',client:Optional[requests.Session]=None,resolve_internal_links:bool=True,run_async:bool=True)->None:
         self.language = language.lower()
         self.country = country.upper()
-        self.client = client if client else httpx.Client()
+        if client:
+            self.client = client
+        else:
+            self.client = requests.Session()
+            self.client.headers.update(HEADERS)
+            self.client.cookies.update(COOKIES)
+
         self.resolve_internal_links = resolve_internal_links
         self.run_async = run_async
         
@@ -110,19 +125,24 @@ class GoogleNewsFeed:
         for item in root.iter('item'):
             try:
                 parsed_items.append(GoogleNewsFeed._parse_item(item))
-            except:
-                logging.debug(f"Failed to parse item: {item}")
+            except Exception as e:
+                logging.debug(f"Failed to parse item: {item}! Exception: {e}")
             
         return parsed_items
         
     async def _async_resolve_internal_links(self,items:list[NewsItem])->list[NewsItem]:
-        async with httpx.AsyncClient() as client:
+        async with aiohttp.ClientSession() as session:
+            session.headers.update(HEADERS)
+            session.cookie_jar.update_cookies(COOKIES)
             for item in items:
                 try:
-                    if item.is_google_internal_link:
-                        response = await client.get(item.link)
-                        if response.status_code == MOVED_STATUS_CODE:
-                            item.link = response.headers['Location']
+                    if item.is_internal_google_link:
+                        async with session.get(item.link) as response:
+                            content = await response.text()
+                            if content:
+                                soup = BeautifulSoup(content, 'html.parser')
+                                item.link = soup.a['href']
+                                del soup
                 except:
                     logging.debug(f"Failed to resolve internal link: {item.link}")
         return items
@@ -130,10 +150,12 @@ class GoogleNewsFeed:
     def _resolve_internal_links(self,items:list[NewsItem])->list[NewsItem]:
         for item in items:
             try:
-                if item.is_google_internal_link:
+                if item.is_internal_google_link:
                     response = self.client.get(item.link)
-                    if response.status_code == MOVED_STATUS_CODE:
-                        item.link = response.headers['Location']
+                    if response.text:
+                        soup = BeautifulSoup(response.text, 'html.parser')
+                        item.link = soup.a['href']
+                        del soup
             except:
                     logging.debug(f"Failed to resolve internal link: {item.link}")
         return items
